@@ -2,6 +2,14 @@
   <div class="register">
     <el-form ref="registerRef" :model="registerForm" :rules="registerRules" class="register-form">
       <h3 class="title">{{ title }}</h3>
+      <el-form-item>
+        <el-alert
+          type="info"
+          :closable="false"
+          show-icon
+          title="注册后默认为「读者」身份，可自助借阅图书；如需管理员权限请联系馆员分配。"
+        />
+      </el-form-item>
       <el-form-item prop="username">
         <el-input 
           v-model="registerForm.username" 

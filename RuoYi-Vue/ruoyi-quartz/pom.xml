@@ -28,7 +28,12 @@
             <groupId>com.ruoyi</groupId>
             <artifactId>ruoyi-common</artifactId>
         </dependency>
-
+        <!-- 引入系统模块，以便调用 IBookBorrowService -->
+        <dependency>
+            <groupId>com.ruoyi</groupId>
+            <artifactId>ruoyi-system</artifactId>
+            <version>${ruoyi.version}</version>
+        </dependency>
     </dependencies>
 
 </project>

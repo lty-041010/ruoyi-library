@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.BookBorrowMapper">
+
+    <resultMap type="com.ruoyi.system.domain.BookBorrow" id="BookBorrowResult">
+        <result property="id" column="id"/>
+        <result property="readerId" column="reader_id"/>
+        <result property="bookId" column="book_id"/>
+        <result property="borrowTime" column="borrow_time"/>
+        <result property="dueTime" column="due_time"/>
+        <result property="returnTime" column="return_time"/>
+        <result property="status" column="status"/>
+        <result property="renewCount" column="renew_count"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="readerName" column="reader_name"/>
+        <result property="cardNo" column="card_no"/>
+        <result property="bookName" column="book_name"/>
+        <result property="isbn" column="isbn"/>
+        <result property="isLocal" column="is_local"/>
+    </resultMap>
+
+    <sql id="selectBookBorrowVo">
+        select b.id, b.reader_id, b.book_id, b.borrow_time, b.due_time, b.return_time,
+        b.status, b.renew_count, b.del_flag, b.create_by, b.create_time, b.update_by, b.update_time, b.remark,
+        b.dept_id,
+        r.real_name as reader_name,
+        r.card_no,
+        i.book_name as book_name,
+        i.isbn
+        from book_borrow b
+        left join book_reader r on b.reader_id = r.id
+        left join book_info i on b.book_id = i.id
+    </sql>
+
+    <!-- 借阅列表 -->
+    <select id="selectBookBorrowList" parameterType="BookBorrow" resultMap="BookBorrowResult">
+        <include refid="selectBookBorrowVo"/>
+        <where>
+            ${params.dataScope}
+            and b.del_flag = '0'
+            <if test="readerId != null "> and b.reader_id = #{readerId}</if>
+            <if test="bookId != null "> and b.book_id = #{bookId}</if>
+            <if test="borrowTime != null "> and b.borrow_time = #{borrowTime}</if>
+            <if test="dueTime != null "> and b.due_time = #{dueTime}</if>
+            <if test="returnTime != null "> and b.return_time = #{returnTime}</if>
+            <if test="status != null  and status != ''"> and b.status = #{status}</if>
+        </where>
+        order by b.borrow_time desc
+    </select>
+
+    <!-- 分页统计总数【条件和上面列表完全一致】 -->
+    <select id="selectBookBorrowCount" parameterType="BookBorrow" resultType="Long">
+        select count(1)
+        from book_borrow b
+        left join book_reader r on b.reader_id = r.id
+        left join book_info i on b.book_id = i.id
+        <where>
+            ${params.dataScope}
+            and b.del_flag = '0'
+            <if test="readerId != null "> and b.reader_id = #{readerId}</if>
+            <if test="bookId != null "> and b.book_id = #{bookId}</if>
+            <if test="borrowTime != null "> and b.borrow_time = #{borrowTime}</if>
+            <if test="dueTime != null "> and b.due_time = #{dueTime}</if>
+            <if test="returnTime != null "> and b.return_time = #{returnTime}</if>
+            <if test="status != null  and status != ''"> and b.status = #{status}</if>
+        </where>
+    </select>
+
+    <select id="selectBookBorrowById" parameterType="Long" resultMap="BookBorrowResult">
+        <include refid="selectBookBorrowVo"/>
+        where b.id = #{id} and b.del_flag = '0'
+    </select>
+
+    <!-- 新增借阅 -->
+    <insert id="insertBookBorrow" parameterType="BookBorrow" useGeneratedKeys="true" keyProperty="id">
+        insert into book_borrow
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="readerId != null">reader_id,</if>
+            <if test="bookId != null">book_id,</if>
+            <if test="borrowTime != null">borrow_time,</if>
+            <if test="dueTime != null">due_time,</if>
+            <if test="returnTime != null">return_time,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="renewCount != null">renew_count,</if>
+            <if test="delFlag != null and delFlag != ''">del_flag,</if>
+            <if test="deptId != null">dept_id,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="readerId != null">#{readerId},</if>
+            <if test="bookId != null">#{bookId},</if>
+            <if test="borrowTime != null">#{borrowTime},</if>
+            <if test="dueTime != null">#{dueTime},</if>
+            <if test="returnTime != null">#{returnTime},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="renewCount != null">#{renewCount},</if>
+            <if test="delFlag != null and delFlag != ''">#{delFlag},</if>
+            <if test="deptId != null">#{deptId},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <!-- 修改借阅记录 -->
+    <update id="updateBookBorrow" parameterType="BookBorrow">
+        update book_borrow
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="readerId != null">reader_id = #{readerId},</if>
+            <if test="bookId != null">book_id = #{bookId},</if>
+            <if test="borrowTime != null">borrow_time = #{borrowTime},</if>
+            <if test="dueTime != null">due_time = #{dueTime},</if>
+            <if test="returnTime != null">return_time = #{returnTime},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="renewCount != null">renew_count = #{renewCount},</if>
+            <if test="delFlag != null and delFlag != ''">del_flag = #{delFlag},</if>
+            <if test="deptId != null">dept_id = #{deptId},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where id = #{id} and del_flag = '0'
+    </update>
+
+    <!-- 逻辑删除 -->
+    <update id="deleteBookBorrowById" parameterType="Long">
+        update book_borrow set del_flag = '2', update_time = now() where id = #{id}
+    </update>
+    <update id="deleteBookBorrowByIds" parameterType="Long[]">
+        update book_borrow set del_flag = '2', update_time = now()
+        where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <!-- Quartz定时任务：批量更新逾期记录 -->
+    <update id="updateOverdueStatus">
+        update book_borrow
+        set status = '2', update_time = now(), update_by = 'system'
+        where status = '0' and due_time &lt; now() and del_flag = '0'
+    </update>
+
+    <!-- 原子修改状态：乐观控制，防止重复归还 -->
+    <update id="updateBorrowStatus">
+        update book_borrow
+        set status = #{newStatus}, update_time = now(), update_by = #{updateBy}
+        where id = #{id} and status = #{oldStatus} and del_flag = '0'
+    </update>
+
+    <!-- 续借：状态必须是借阅中，续借次数 +1 -->
+    <update id="updateRenewInfo">
+        update book_borrow
+        set due_time = #{dueTime}, renew_count = renew_count + 1, update_time = now(), update_by = #{updateBy}
+        where id = #{id} and status = '0' and del_flag = '0'
+    </update>
+
+    <!-- 扫码跨馆归还：按卡号/ISBN查找单条在借记录 -->
+    <select id="selectActiveBorrowForCrossReturn" resultMap="BookBorrowResult">
+        select b.id, b.reader_id, b.book_id, b.borrow_time, b.due_time, b.status, b.dept_id,
+        r.real_name as reader_name, r.card_no, i.book_name, i.isbn
+        from book_borrow b
+        left join book_reader r on b.reader_id = r.id
+        left join book_info i on b.book_id = i.id
+        where b.status in ('0', '2') and b.del_flag = '0'
+        <if test="cardNo != null and cardNo != ''">
+            and r.card_no = #{cardNo}
+        </if>
+        <if test="isbn != null and isbn != ''">
+            and i.isbn = #{isbn}
+        </if>
+        limit 1
+    </select>
+
+    <!-- 跨馆归还列表 -->
+    <select id="selectCrossReturnList" resultMap="BookBorrowResult">
+        select b.id, b.reader_id, b.book_id, b.borrow_time, b.due_time, b.status, b.dept_id,
+        r.real_name as reader_name, r.card_no, i.book_name, i.isbn,
+        CASE WHEN b.dept_id = #{currentDeptId} THEN 1 ELSE 0 END as is_local
+        from book_borrow b
+        left join book_reader r on b.reader_id = r.id
+        left join book_info i on b.book_id = i.id
+        where b.status in ('0', '2') and b.del_flag = '0'
+        <if test="cardNo != null and cardNo != ''">
+            and r.card_no like concat('%', #{cardNo}, '%')
+        </if>
+        <if test="bookName != null and bookName != ''">
+            and i.book_name like concat('%', #{bookName}, '%')
+        </if>
+        order by b.borrow_time desc
+    </select>
+
+</mapper>

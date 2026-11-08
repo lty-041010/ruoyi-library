@@ -31,13 +31,16 @@ import variables from '@/assets/styles/variables.module.scss'
 import useAppStore from '@/store/modules/app'
 import useSettingsStore from '@/store/modules/settings'
 import usePermissionStore from '@/store/modules/permission'
+import useUserStore from '@/store/modules/user'
 
 const route = useRoute()
 const appStore = useAppStore()
 const settingsStore = useSettingsStore()
 const permissionStore = usePermissionStore()
+const userStore = useUserStore()
 
-const sidebarRouters = computed(() => permissionStore.sidebarRouters)
+// 读者端只保留门户，隐藏后台菜单（权限仍保留，避免接口 403）
+const sidebarRouters = computed(() => userStore.roles.includes('book_reader') ? [] : permissionStore.sidebarRouters)
 const showLogo = computed(() => settingsStore.sidebarLogo)
 const sideTheme = computed(() => settingsStore.sideTheme)
 const theme = computed(() => settingsStore.theme)

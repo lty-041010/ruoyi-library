@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.BookReservationMapper">
+
+    <resultMap type="com.ruoyi.system.domain.BookReservation" id="BookReservationResult">
+        <result property="id" column="id"/>
+        <result property="readerId" column="reader_id"/>
+        <result property="bookId" column="book_id"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="status" column="status"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+        <result property="bookName" column="book_name"/>
+        <result property="isbn" column="isbn"/>
+        <result property="author" column="author"/>
+        <result property="coverImage" column="cover_image"/>
+        <result property="availableStock" column="available_stock"/>
+        <result property="reserveTime" column="create_time"/>
+        <result property="readerName" column="reader_name"/>
+        <result property="cardNo" column="card_no"/>
+        <result property="deptName" column="dept_name"/>
+    </resultMap>
+
+    <sql id="selectReservationVo">
+        select r.id, r.reader_id, r.book_id, r.dept_id, r.status, r.del_flag,
+        r.create_by, r.create_time, r.update_by, r.update_time, r.remark,
+        i.book_name, i.isbn, i.author, i.cover_image, i.available_stock,
+        rd.real_name as reader_name, rd.card_no, d.dept_name
+        from book_reservation r
+        left join book_info i on r.book_id = i.id
+        left join book_reader rd on r.reader_id = rd.id
+        left join sys_dept d on r.dept_id = d.dept_id
+    </sql>
+
+    <select id="selectReservationList" parameterType="com.ruoyi.system.domain.BookReservation" resultMap="BookReservationResult">
+        <include refid="selectReservationVo"/>
+        <where>
+            ${params.dataScope}
+            and r.del_flag = '0'
+            <if test="readerId != null"> and r.reader_id = #{readerId}</if>
+            <if test="status != null and status != ''"> and r.status = #{status}</if>
+            <if test="bookName != null and bookName != ''"> and i.book_name like concat('%', #{bookName}, '%')</if>
+            <if test="cardNo != null and cardNo != ''"> and rd.card_no = #{cardNo}</if>
+        </where>
+        order by r.create_time desc
+    </select>
+
+    <select id="selectMyReservations" resultMap="BookReservationResult">
+        <include refid="selectReservationVo"/>
+        where r.del_flag = '0' and r.reader_id = #{readerId}
+        order by r.create_time desc
+    </select>
+
+    <select id="selectReservationById" parameterType="Long" resultMap="BookReservationResult">
+        <include refid="selectReservationVo"/>
+        where r.id = #{id} and r.del_flag = '0'
+    </select>
+
+    <select id="countActiveReservation" resultType="int">
+        select count(1) from book_reservation
+        where reader_id = #{readerId} and book_id = #{bookId} and status = '0' and del_flag = '0'
+    </select>
+
+    <insert id="insertReservation" parameterType="com.ruoyi.system.domain.BookReservation" useGeneratedKeys="true" keyProperty="id">
+        insert into book_reservation
+        (reader_id, book_id, dept_id, status, del_flag, create_by, create_time)
+        values
+        (#{readerId}, #{bookId}, #{deptId}, #{status}, '0', #{createBy}, #{createTime})
+    </insert>
+
+    <update id="cancelReservation">
+        update book_reservation
+        set status = '2', update_by = #{updateBy}, update_time = now()
+        where id = #{id} and reader_id = #{readerId} and status = '0' and del_flag = '0'
+    </update>
+
+    <select id="countActiveReservationByBook" resultType="int">
+        select count(1) from book_reservation
+        where book_id = #{bookId} and status = '0' and del_flag = '0'
+    </select>
+
+    <update id="handleReservation">
+        update book_reservation
+        set status = '3', update_by = #{updateBy}, update_time = now()
+        where id = #{id} and status = '0' and del_flag = '0'
+    </update>
+
+    <update id="cancelReservationById">
+        update book_reservation
+        set status = '2', update_by = #{updateBy}, update_time = now()
+        where id = #{id} and status = '0' and del_flag = '0'
+    </update>
+
+    <update id="expireReservations">
+        update book_reservation
+        set status = '2', update_by = 'system', update_time = now()
+        where status = '0' and del_flag = '0'
+          and create_time &lt; date_sub(now(), interval #{days} day)
+    </update>
+</mapper>

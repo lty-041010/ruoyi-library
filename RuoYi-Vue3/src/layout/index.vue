@@ -1,8 +1,8 @@
 <template>
   <div :class="classObj" class="app-wrapper" :style="{ '--current-color': theme, '--current-color-light': theme + '1a', '--current-color-dark-bg': theme + '33' }">
     <div v-if="device === 'mobile' && sidebar.opened" class="drawer-bg" @click="handleClickOutside"/>
-    <sidebar v-if="!sidebar.hide" class="sidebar-container" />
-    <div :class="{ hasTagsView: needTagsView, sidebarHide: sidebar.hide }" class="main-container">
+    <sidebar v-if="!sidebar.hide && !isReader" class="sidebar-container" />
+    <div :class="{ hasTagsView: needTagsView, sidebarHide: sidebar.hide || isReader }" class="main-container">
       <div :class="{ 'fixed-header': fixedHeader }">
         <navbar @setLayout="setLayout" />
         <tags-view v-if="needTagsView" />
@@ -19,13 +19,21 @@ import Sidebar from './components/Sidebar/index.vue'
 import { AppMain, Navbar, Settings, TagsView } from './components'
 import useAppStore from '@/store/modules/app'
 import useSettingsStore from '@/store/modules/settings'
+import useUserStore from '@/store/modules/user'
 
 const settingsStore = useSettingsStore()
 const theme = computed(() => settingsStore.theme)
 const sidebar = computed(() => useAppStore().sidebar)
 const device = computed(() => useAppStore().device)
-const needTagsView = computed(() => settingsStore.tagsView)
 const fixedHeader = computed(() => settingsStore.fixedHeader)
+
+// 读者角色：完全隐藏侧边栏和标签页
+const userStore = useUserStore()
+const isReader = computed(() => userStore.roles.includes('book_reader'))
+const needTagsView = computed(() => settingsStore.tagsView && !isReader.value)
+watch(isReader, (val) => {
+  useAppStore().toggleSideBarHide(val)
+}, { immediate: true })
 
 const classObj = computed(() => ({
   hideSidebar: !sidebar.value.opened,

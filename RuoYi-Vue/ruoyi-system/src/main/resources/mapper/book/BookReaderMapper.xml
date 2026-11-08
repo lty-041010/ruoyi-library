@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.BookReaderMapper">
+
+    <resultMap type="com.ruoyi.system.domain.BookReader" id="BookReaderResult">
+        <result property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="cardNo" column="card_no"/>
+        <result property="realName" column="real_name"/>
+        <result property="phone" column="phone"/>
+        <result property="maxBorrowNum" column="max_borrow_num"/>
+        <result property="currentBorrowNum" column="current_borrow_num"/>
+        <result property="status" column="status"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="deptName" column="dept_name"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <!-- 借书：读者借阅数+1（book_reader 主键列名是 id，不是 reader_id） -->
+    <update id="increaseCurrentBorrowNum" parameterType="Long">
+        update book_reader
+        set current_borrow_num = current_borrow_num + 1
+        where id = #{readerId} and del_flag = '0' and status = '0'
+    </update>
+
+    <!-- 还书：读者借阅数-1 -->
+    <update id="decreaseCurrentBorrowNum" parameterType="Long">
+        update book_reader
+        set current_borrow_num = case when current_borrow_num &gt; 0 then current_borrow_num - 1 else 0 end
+        where id = #{readerId} and del_flag = '0'
+    </update>
+
+    <sql id="selectBookReaderVo">
+        select r.id, r.user_id, r.card_no, r.real_name, r.phone, r.max_borrow_num, r.current_borrow_num,
+        r.status, r.dept_id, d.dept_name, r.del_flag,
+        r.create_by, r.create_time, r.update_by, r.update_time, r.remark
+        from book_reader r
+        left join sys_dept d on r.dept_id = d.dept_id and d.del_flag = '0'
+    </sql>
+
+    <select id="selectBookReaderByUserId" parameterType="Long" resultMap="BookReaderResult">
+        <include refid="selectBookReaderVo"/>
+        where r.user_id = #{userId} and r.del_flag = '0'
+    </select>
+
+    <select id="selectBookReaderByCardNo" resultMap="BookReaderResult">
+        <include refid="selectBookReaderVo"/>
+        where r.card_no = #{cardNo} and r.del_flag = '0'
+        limit 1
+    </select>
+
+    <select id="selectBookReaderList" parameterType="BookReader" resultMap="BookReaderResult">
+        <include refid="selectBookReaderVo"/>
+        <where>
+            ${params.dataScope}
+            and r.del_flag = '0'
+            <if test="realName != null and realName != ''">
+                and r.real_name like concat('%',#{realName},'%')
+            </if>
+            <if test="phone != null and phone != ''">
+                and r.phone = #{phone}
+            </if>
+            <if test="cardNo != null and cardNo != ''">
+                and r.card_no like concat('%',#{cardNo},'%')
+            </if>
+            <if test="status != null and status != ''">
+                and r.status = #{status}
+            </if>
+        </where>
+        order by r.create_time desc
+    </select>
+
+    <select id="selectBookReaderCount" parameterType="BookReader" resultType="Long">
+        select count(1)
+        from book_reader r
+        <where>
+            ${params.dataScope}
+            and r.del_flag = '0'
+            <if test="realName != null and realName != ''">
+                and r.real_name like concat('%',#{realName},'%')
+            </if>
+            <if test="phone != null and phone != ''">
+                and r.phone = #{phone}
+            </if>
+            <if test="cardNo != null and cardNo != ''">
+                and r.card_no like concat('%',#{cardNo},'%')
+            </if>
+            <if test="status != null and status != ''">
+                and r.status = #{status}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectBookReaderById" parameterType="Long" resultMap="BookReaderResult">
+        <include refid="selectBookReaderVo"/>
+        where r.id = #{id} and r.del_flag = '0'
+    </select>
+
+    <insert id="insertBookReader" parameterType="BookReader" useGeneratedKeys="true" keyProperty="id">
+        insert into book_reader
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="cardNo != null">card_no,</if>
+            <if test="realName != null">real_name,</if>
+            <if test="phone != null">phone,</if>
+            <if test="maxBorrowNum != null">max_borrow_num,</if>
+            <if test="currentBorrowNum != null">current_borrow_num,</if>
+            <if test="status != null">status,</if>
+            <if test="deptId != null">dept_id,</if>
+            <if test="delFlag != null">del_flag,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="cardNo != null">#{cardNo},</if>
+            <if test="realName != null">#{realName},</if>
+            <if test="phone != null">#{phone},</if>
+            <if test="maxBorrowNum != null">#{maxBorrowNum},</if>
+            <if test="currentBorrowNum != null">#{currentBorrowNum},</if>
+            <if test="status != null">#{status},</if>
+            <if test="deptId != null">#{deptId},</if>
+            <if test="delFlag != null">#{delFlag},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateBookReader" parameterType="BookReader">
+        update book_reader
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="cardNo != null">card_no = #{cardNo},</if>
+            <if test="realName != null">real_name = #{realName},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="maxBorrowNum != null">max_borrow_num = #{maxBorrowNum},</if>
+            <if test="currentBorrowNum != null">current_borrow_num = #{currentBorrowNum},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="deptId != null">dept_id = #{deptId},</if>
+            <if test="delFlag != null">del_flag = #{delFlag},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where id = #{id} and del_flag = '0'
+    </update>
+
+    <update id="deleteBookReaderById" parameterType="Long">
+        update book_reader set del_flag = '2', update_time = now() where id = #{id}
+    </update>
+
+    <update id="deleteBookReaderByIds" parameterType="Long[]">
+        update book_reader set del_flag = '2', update_time = now()
+        where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <!-- 校验借书卡号唯一 -->
+    <select id="checkCardNoUnique" resultType="Integer">
+        select count(1) from book_reader
+        where card_no = #{cardNo} and dept_id = #{deptId} and del_flag='0'
+        <if test="id != null"> and id != #{id}</if>
+    </select>
+
+    <!-- 校验sys_user的userId唯一 -->
+    <select id="checkUserIdUnique" resultType="Integer">
+        select count(1) from book_reader
+        where user_id = #{userId} and del_flag='0'
+        <if test="id != null"> and id != #{id}</if>
+    </select>
+
+    <!-- 判断读者有没有未归还图书 status 0借阅中、2逾期 -->
+    <select id="checkReaderHasUnreturnedBorrow" resultType="Integer">
+        select count(1) from book_borrow
+        where reader_id = #{readerId} and del_flag='0' and status in ('0','2')
+    </select>
+
+</mapper>

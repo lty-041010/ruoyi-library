@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.BookCategoryMapper">
+
+    <!-- ★ 必须确保 namespace 是 BookCategoryMapper，绝对不能是 Borrow -->
+
+    <resultMap type="BookCategory" id="BookCategoryResult">
+        <result property="id"    column="id"    />
+        <result property="parentId"    column="parent_id"    />
+        <result property="ancestors"    column="ancestors"    />
+        <result property="categoryName"    column="category_name"    />
+        <result property="orderNum"    column="order_num"    />
+        <result property="status"    column="status"    />
+        <result property="deptId"    column="dept_id"    />
+        <result property="delFlag"    column="del_flag"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectBookCategoryVo">
+        select c.id, c.parent_id, c.ancestors, c.category_name, c.order_num, c.status, c.dept_id, c.del_flag, c.create_by, c.create_time, c.update_by, c.update_time, c.remark
+        from book_category c
+    </sql>
+
+    <!-- ★ 必须确保这个 id 是 selectBookCategoryList -->
+    <select id="selectBookCategoryList" parameterType="BookCategory" resultMap="BookCategoryResult">
+        <include refid="selectBookCategoryVo"/>
+        <where>
+            and c.del_flag = '0'
+            <if test="parentId != null "> and c.parent_id = #{parentId}</if>
+            <if test="ancestors != null  and ancestors != ''"> and c.ancestors = #{ancestors}</if>
+            <if test="categoryName != null  and categoryName != ''"> and c.category_name like concat('%', #{categoryName}, '%')</if>
+            <if test="orderNum != null "> and c.order_num = #{orderNum}</if>
+            <if test="status != null  and status != ''"> and c.status = #{status}</if>
+        </where>
+    </select>
+
+    <select id="selectBookCategoryById" parameterType="Long" resultMap="BookCategoryResult">
+        <include refid="selectBookCategoryVo"/>
+        where c.id = #{id} and c.del_flag = '0'
+    </select>
+
+    <insert id="insertBookCategory" parameterType="BookCategory" useGeneratedKeys="true" keyProperty="id">
+        insert into book_category
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="parentId != null">parent_id,</if>
+            <if test="ancestors != null and ancestors != ''">ancestors,</if>
+            <if test="categoryName != null and categoryName != ''">category_name,</if>
+            <if test="orderNum != null">order_num,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="deptId != null">dept_id,</if>
+            <if test="delFlag != null and delFlag != ''">del_flag,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="parentId != null">#{parentId},</if>
+            <if test="ancestors != null and ancestors != ''">#{ancestors},</if>
+            <if test="categoryName != null and categoryName != ''">#{categoryName},</if>
+            <if test="orderNum != null">#{orderNum},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="deptId != null">#{deptId},</if>
+            <if test="delFlag != null and delFlag != ''">#{delFlag},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateBookCategory" parameterType="BookCategory">
+        update book_category
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="parentId != null">parent_id = #{parentId},</if>
+            <if test="ancestors != null and ancestors != ''">ancestors = #{ancestors},</if>
+            <if test="categoryName != null and categoryName != ''">category_name = #{categoryName},</if>
+            <if test="orderNum != null">order_num = #{orderNum},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="delFlag != null and delFlag != ''">del_flag = #{delFlag},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where id = #{id} and del_flag = '0'
+    </update>
+
+    <update id="deleteBookCategoryById" parameterType="Long">
+        update book_category set del_flag = '2', update_time = now() where id = #{id}
+    </update>
+
+    <update id="deleteBookCategoryByIds" parameterType="Long">
+        update book_category set del_flag = '2', update_time = now()
+        where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <select id="checkCategoryNameUnique" resultType="int">
+        select count(1) from book_category
+        where category_name = #{categoryName} and del_flag = '0' and parent_id = #{parentId}
+        <if test="id != null"> and id != #{id}</if>
+    </select>
+
+    <select id="hasChildByCategoryId" resultType="int">
+        select count(1) from book_category
+        where parent_id = #{categoryId} and del_flag = '0'
+    </select>
+
+    <select id="checkCategoryExistBook" resultType="int">
+        select count(1) from book_info
+        where category_id = #{categoryId} and del_flag = '0'
+    </select>
+</mapper>

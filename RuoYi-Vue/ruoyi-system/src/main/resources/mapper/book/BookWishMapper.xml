@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.BookWishMapper">
+
+    <resultMap type="com.ruoyi.system.domain.BookWish" id="BookWishResult">
+        <result property="id" column="id"/>
+        <result property="readerId" column="reader_id"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="title" column="title"/>
+        <result property="author" column="author"/>
+        <result property="isbn" column="isbn"/>
+        <result property="reason" column="reason"/>
+        <result property="status" column="status"/>
+        <result property="reply" column="reply"/>
+        <result property="bookId" column="book_id"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="readerName" column="reader_name"/>
+        <result property="cardNo" column="card_no"/>
+        <result property="deptName" column="dept_name"/>
+        <result property="linkedBookName" column="linked_book_name"/>
+    </resultMap>
+
+    <sql id="selectWishVo">
+        select w.id, w.reader_id, w.dept_id, w.title, w.author, w.isbn, w.reason, w.status,
+        w.reply, w.book_id, w.del_flag, w.create_by, w.create_time, w.update_by, w.update_time,
+        rd.real_name as reader_name, rd.card_no, d.dept_name, i.book_name as linked_book_name
+        from book_wish w
+        left join book_reader rd on w.reader_id = rd.id
+        left join sys_dept d on w.dept_id = d.dept_id
+        left join book_info i on w.book_id = i.id
+    </sql>
+
+    <select id="selectWishList" parameterType="com.ruoyi.system.domain.BookWish" resultMap="BookWishResult">
+        <include refid="selectWishVo"/>
+        <where>
+            ${params.dataScope}
+            and w.del_flag = '0'
+            <if test="status != null and status != ''"> and w.status = #{status}</if>
+            <if test="title != null and title != ''"> and w.title like concat('%', #{title}, '%')</if>
+            <if test="readerId != null"> and w.reader_id = #{readerId}</if>
+        </where>
+        order by w.create_time desc
+    </select>
+
+    <select id="selectMyWishes" resultMap="BookWishResult">
+        <include refid="selectWishVo"/>
+        where w.del_flag = '0' and w.reader_id = #{readerId}
+        order by w.create_time desc
+    </select>
+
+    <select id="selectWishById" parameterType="Long" resultMap="BookWishResult">
+        <include refid="selectWishVo"/>
+        where w.id = #{id} and w.del_flag = '0'
+    </select>
+
+    <select id="countActiveWish" resultType="int">
+        select count(1) from book_wish
+        where reader_id = #{readerId} and title = #{title}
+          and status in ('0','1','3') and del_flag = '0'
+    </select>
+
+    <insert id="insertWish" parameterType="com.ruoyi.system.domain.BookWish" useGeneratedKeys="true" keyProperty="id">
+        insert into book_wish (reader_id, dept_id, title, author, isbn, reason, status, del_flag, create_by, create_time)
+        values (#{readerId}, #{deptId}, #{title}, #{author}, #{isbn}, #{reason}, '0', '0', #{createBy}, now())
+    </insert>
+
+    <update id="approveWish">
+        update book_wish
+        set status = '1', reply = #{reply}, update_by = #{updateBy}, update_time = now()
+        where id = #{id} and status = '0' and del_flag = '0'
+    </update>
+
+    <update id="rejectWish">
+        update book_wish
+        set status = '2', reply = #{reply}, update_by = #{updateBy}, update_time = now()
+        where id = #{id} and status = '0' and del_flag = '0'
+    </update>
+
+    <update id="onShelfWish">
+        update book_wish
+        set status = '3', book_id = #{bookId}, update_by = #{updateBy}, update_time = now()
+        where id = #{id} and status = '1' and del_flag = '0'
+    </update>
+
+    <update id="cancelWish">
+        update book_wish
+        set status = '2', reply = '读者自行取消', update_by = #{updateBy}, update_time = now()
+        where id = #{id} and reader_id = #{readerId} and status = '0' and del_flag = '0'
+    </update>
+</mapper>

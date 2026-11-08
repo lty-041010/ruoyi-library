@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.BookNoticeMapper">
+
+    <resultMap type="com.ruoyi.system.domain.BookNotice" id="BookNoticeResult">
+        <result property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="type" column="type"/>
+        <result property="readFlag" column="read_flag"/>
+        <result property="bizId" column="biz_id"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createTime" column="create_time"/>
+        <result property="readerUserId" column="reader_user_id"/>
+        <result property="bookName" column="book_name"/>
+        <result property="dueTime" column="due_time"/>
+    </resultMap>
+
+    <insert id="insertNotice" parameterType="com.ruoyi.system.domain.BookNotice" useGeneratedKeys="true" keyProperty="id">
+        insert into book_notice (user_id, title, content, type, read_flag, biz_id, del_flag, create_time)
+        values (#{userId}, #{title}, #{content}, #{type}, '0', #{bizId}, '0', now())
+    </insert>
+
+    <select id="selectMyNotices" resultMap="BookNoticeResult">
+        select * from book_notice
+        where user_id = #{userId} and del_flag = '0'
+        order by create_time desc
+        limit 100
+    </select>
+
+    <select id="countUnread" resultType="int">
+        select count(1) from book_notice
+        where user_id = #{userId} and read_flag = '0' and del_flag = '0'
+    </select>
+
+    <update id="markRead">
+        update book_notice set read_flag = '1'
+        where id = #{id} and user_id = #{userId} and del_flag = '0'
+    </update>
+
+    <update id="markAllRead">
+        update book_notice set read_flag = '1'
+        where user_id = #{userId} and read_flag = '0' and del_flag = '0'
+    </update>
+
+    <select id="countByBiz" resultType="int">
+        select count(1) from book_notice
+        where user_id = #{userId} and type = #{type} and biz_id = #{bizId} and del_flag = '0'
+    </select>
+
+    <select id="selectDueSoonCandidates" resultMap="BookNoticeResult">
+        select b.id as biz_id, rd.user_id as reader_user_id, i.book_name, b.due_time
+        from book_borrow b
+        join book_reader rd on b.reader_id = rd.id
+        join book_info i on b.book_id = i.id
+        where b.status = '0' and b.del_flag = '0' and rd.del_flag = '0'
+          and b.due_time is not null
+          and b.due_time between now() and date_add(now(), interval #{days} day)
+    </select>
+
+    <select id="selectOverdueCandidates" resultMap="BookNoticeResult">
+        select b.id as biz_id, rd.user_id as reader_user_id, i.book_name, b.due_time
+        from book_borrow b
+        join book_reader rd on b.reader_id = rd.id
+        join book_info i on b.book_id = i.id
+        where b.status = '2' and b.del_flag = '0' and rd.del_flag = '0'
+    </select>
+</mapper>

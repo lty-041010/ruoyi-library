@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.BookTransferRecordMapper">
+
+    <resultMap type="BookTransferRecord" id="BookTransferRecordResult">
+        <result property="id"    column="id"    />
+        <result property="bookId"    column="book_id"    />
+        <result property="bookName"    column="book_name"    />
+        <result property="sourceDeptId"    column="source_dept_id"    />
+        <result property="sourceDeptName"    column="source_dept_name"    />
+        <result property="targetDeptId"    column="target_dept_id"    />
+        <result property="targetDeptName"    column="target_dept_name"    />
+        <result property="operator"    column="operator"    />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <select id="selectBookTransferRecordList" parameterType="BookTransferRecord" resultMap="BookTransferRecordResult">
+        select id, book_id, book_name, source_dept_id, source_dept_name, target_dept_id, target_dept_name, operator, create_time
+        from book_transfer_record
+        <where>
+            <if test="bookName != null  and bookName != ''"> and book_name like concat('%', #{bookName}, '%')</if>
+            <if test="operator != null  and operator != ''"> and operator like concat('%', #{operator}, '%')</if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <insert id="insertBookTransferRecord" parameterType="BookTransferRecord" useGeneratedKeys="true" keyProperty="id">
+        insert into book_transfer_record
+        (book_id, book_name, source_dept_id, source_dept_name, target_dept_id, target_dept_name, operator, create_time)
+        values
+        (#{bookId}, #{bookName}, #{sourceDeptId}, #{sourceDeptName}, #{targetDeptId}, #{targetDeptName}, #{operator}, now())
+    </insert>
+    <delete id="deleteBookTransferRecordByIds" parameterType="Long">
+        delete from book_transfer_record where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>
